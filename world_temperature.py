@@ -17,12 +17,12 @@ import streamlit as st
 @st.cache_data
 def data_preparation():
     # Importing the co2 dataset
-    df_co2 = pd.read_csv(".\Data\owid-co2-data.csv", index_col='year')
+    df_co2 = pd.read_csv("owid-co2-data.csv", index_col='year')
     df_co2 = df_co2[['population', 'co2', 'primary_energy_consumption', 'methane', 'nitrous_oxide']][(
         df_co2.country == 'World') & (df_co2.index >= 1880)]
 
     # Importing temperature dataset
-    df_temp = pd.read_csv(".\Data\GLB.Ts+dSST.csv", header=1, index_col="Year")
+    df_temp = pd.read_csv("GLB.Ts+dSST.csv", header=1, index_col="Year")
     df_temp = df_temp[df_temp.columns[:12]]
 
     # Replace strange values for nan
@@ -102,7 +102,7 @@ df = data_preparation()
 
 # Initial screen of Streamlit app
 st.title("WORLD TEMPERATURE")
-st.image("Data\World_temp.png")
+st.image("World_temp.png")
 st.subheader("HOW TEMPERATURE HAS CHANGED OVER THE DECADES")
 "Breno Ribeiro"
 "Kaitlyn Chebowski"
