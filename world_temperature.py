@@ -33,10 +33,13 @@ def data_preparation():
         axis=1, skipna=True)
     df_temp = df_temp.mean_temp
 
+    # Mean temperature at 2022
+    mean_temp_2022 = df_temp.iloc[-2]
+
     # Joing the both datasets in one
     df = df_co2.join(df_temp)
     df.index = df.index.astype(str)
-    return df
+    return df, mean_temp_2022
 
 # Function to calculate the temperature differences between each year and 3, 5 and 10 years before
 
@@ -72,7 +75,7 @@ def mean(df):
                 mean_cons += df.primary_energy_consumption.shift(-i)[
                     df.index == year]
             df_mean = df_mean.append({'period': period,
-                                      'mean_temp': mean_temp.item()/5,
+                                     'mean_temp': mean_temp.item()/5,
                                       'mean_pop': mean_pop.item()/5,
                                       'mean_co2': mean_co2.item()/5,
                                       'mean_cons': mean_cons.item()/5}, ignore_index=True)
@@ -98,7 +101,7 @@ def scale(X_train, X_test):
 
 
 # Loading the dataset
-df = data_preparation()
+df, mean_temp_2022 = data_preparation()
 
 # Initial screen of Streamlit app
 st.title("WORLD TEMPERATURE")
@@ -120,7 +123,7 @@ with expand:
     (varying from 1880 until the present), the monthly temperature variation and the 3-months mean temperature.
     \nFor the sake of simplicity and available data, the data was reduced, filtering as world CO2 emission, population and primary energy consumption
     since 1965 (due lack o observations before that for primary energy consumption) and mean temperature variation by year.
-    \nTwo diferente approaches were consider:
+    \nTwo different approaches were consider:
     \n1. Introduce the difference between the temperature variation of each year and 3, 5, and 10 years before
     \n2. Group by each 5, calculating the average of each variable along the years."""
 
@@ -224,7 +227,7 @@ df_fut = df_new.drop("mean_temp", axis=1).reset_index()
 if approach == "Temperature difference":
     index = ['2022', '2023', '2024', '2025', '2026']
     df_fut = pd.DataFrame(columns=['population', 'co2', 'primary_energy_consumption',
-                          'mean_temp_3', 'mean_temp_5', 'mean_temp_10'], index=index)
+                                   'mean_temp_3', 'mean_temp_5', 'mean_temp_10'], index=index)
 
     df_fut = pd.concat([df_new.drop("mean_temp", axis=1), df_fut])
 
@@ -237,7 +240,8 @@ if approach == "Temperature difference":
                     ((reduction_co2/100)*df_fut[col].iloc[56])/5
 
         else:
-            xp = np.polyfit(x=df_new.index.astype(int), y=df_new[col], deg=1)
+            xp = np.polyfit(x=df_new.index.astype(
+                int), y=df_new[col], deg=1)
             y_fitted = np.polyval(xp, np.linspace(
                 int(df_new.index[0]), int(df_new.index[-1]), 57))
             delta = y_fitted[-1]-y_fitted[-2]
@@ -347,7 +351,7 @@ else:
 # Graph of predictions
 fig1, ax1 = plt.subplots()
 plt.title(f"Prediction for {model_str}")
-plt.plot(pred, label='Predict Temperature')
+plt.plot(pred, label='Predicted Temperature')
 plt.plot(df_target, label='Real Temperature')
 plt.plot(x, y, 'r--', label="Predict Temperature next 5 years")
 plt.legend()
@@ -361,4 +365,12 @@ plt.annotate(text=round(pred_fut[-1], 2),
              textcoords='offset points',
              arrowprops=dict(arrowstyle="->", color='black')
              )
+if approach == "Temperature difference":
+    pred_mean_temp_2022 = pred[-5][0]
+    plt.annotate(text=f"""Real temperature for 2022 = {mean_temp_2022:.2}\nPredicted temperature for 2022 = {pred_mean_temp_2022:.2}""",
+                 xy=(x[-5], pred_fut[-5]),
+                 xycoords='data',
+                 xytext=(27, 0.10),
+                 arrowprops=dict(arrowstyle="->", color='black'))
+
 st.pyplot(fig1)
